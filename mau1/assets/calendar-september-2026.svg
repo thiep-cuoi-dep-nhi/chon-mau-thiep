@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 335 272" role="img" aria-labelledby="title desc">
+  <title id="title">Lịch tháng 9 năm 2026</title>
+  <desc id="desc">Ngày 19 và 20 tháng 9 được khoanh tròn.</desc>
+  <style>
+    .weekday { font: 700 16px Arial, sans-serif; fill: #111; text-anchor: middle; }
+    .day { font: 700 16px Arial, sans-serif; fill: #111; text-anchor: middle; dominant-baseline: middle; }
+    .marked { fill: none; stroke: #b2151f; stroke-width: 2.5; }
+    .marked-day { fill: #b2151f; }
+  </style>
+  <g class="weekday">
+    <text x="33" y="39">T2</text><text x="78" y="39">T3</text><text x="123" y="39">T4</text>
+    <text x="168" y="39">T5</text><text x="213" y="39">T6</text><text x="258" y="39">T7</text><text x="303" y="39">CN</text>
+  </g>
+  <g class="day">
+    <text x="78" y="76">1</text><text x="123" y="76">2</text><text x="168" y="76">3</text><text x="213" y="76">4</text><text x="258" y="76">5</text><text x="303" y="76">6</text>
+    <text x="33" y="111">7</text><text x="78" y="111">8</text><text x="123" y="111">9</text><text x="168" y="111">10</text><text x="213" y="111">11</text><text x="258" y="111">12</text><text x="303" y="111">13</text>
+    <text x="33" y="146">14</text><text x="78" y="146">15</text><text x="123" y="146">16</text><text x="168" y="146">17</text><text x="213" y="146">18</text>
+    <circle class="marked" cx="258" cy="146" r="17"/><text class="marked-day" x="258" y="146">19</text>
+    <circle class="marked" cx="303" cy="146" r="17"/><text class="marked-day" x="303" y="146">20</text>
+    <text x="33" y="181">21</text><text x="78" y="181">22</text><text x="123" y="181">23</text><text x="168" y="181">24</text><text x="213" y="181">25</text><text x="258" y="181">26</text><text x="303" y="181">27</text>
+    <text x="33" y="216">28</text><text x="78" y="216">29</text><text x="123" y="216">30</text>
+  </g>
+</svg>
