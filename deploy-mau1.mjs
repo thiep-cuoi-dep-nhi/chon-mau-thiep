@@ -1,17 +1,21 @@
 #!/usr/bin/env node
 
 /**
- * Cập nhật thiệp cưới từ info.json và images-update1.
+ * Sinh thiệp cưới cho một cặp đôi từ mẫu mau1, info.json và images-update1.
+ *
+ * Khác với update-thiepcuoi1.mjs (đã lỗi thời, sửa thẳng vào thiepcuoi1/index.html),
+ * tool này không đụng vào mau1 — nó đọc mau1 làm mẫu và sinh ra một thư mục con
+ * mới dưới clients/, đặt tên theo tên chú rể và cô dâu không dấu (ví dụ: dong-loan/).
  *
  * Chạy tại thư mục chứa file này:
- *   node update-thiepcuoi1.mjs
+ *   node deploy-mau1.mjs
  *
  * Tùy chọn:
- *   node update-thiepcuoi1.mjs --dry-run
- *   node update-thiepcuoi1.mjs --info /duong-dan/info-khac.json
+ *   node deploy-mau1.mjs --dry-run
+ *   node deploy-mau1.mjs --info /duong-dan/info-khac.json
  */
 
-import { copyFile, mkdir, readFile, writeFile } from 'node:fs/promises';
+import { cp, mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -21,13 +25,13 @@ const dryRun = args.includes('--dry-run');
 
 if (args.includes('--help') || args.includes('-h')) {
   console.log(`Cách dùng:
-  node update-thiepcuoi1.mjs
-  node update-thiepcuoi1.mjs --dry-run
-  node update-thiepcuoi1.mjs --info /duong-dan/info.json
+  node deploy-mau1.mjs
+  node deploy-mau1.mjs --dry-run
+  node deploy-mau1.mjs --info /duong-dan/info.json
 
-Tool đọc info.json và images-update1, cập nhật thiepcuoi1/index.html,
-đồng bộ ảnh vào thiepcuoi1/assets/images, rồi tạo lại
-thiepcuoi1/assets/wedding-calendar.svg.`);
+Tool đọc info.json và images-update1, dùng mau1 làm mẫu để sinh thiệp
+cho một cặp đôi vào thư mục clients/<ten-chu-re>-<ten-co-dau>/
+(tên không dấu, ví dụ clients/dong-loan/). Mẫu mau1 không bị thay đổi.`);
   process.exit(0);
 }
 
@@ -45,10 +49,11 @@ if (unsupportedArgs.length > 0) {
 const infoPath = infoFlagIndex === -1
   ? resolve(toolDir, 'info.json')
   : resolve(process.cwd(), args[infoFlagIndex + 1]);
-const htmlPath = resolve(toolDir, 'thiepcuoi1/index.html');
-const calendarPath = resolve(toolDir, 'thiepcuoi1/assets/wedding-calendar.svg');
+const templateDir = resolve(toolDir, 'mau1');
+const templateHtmlPath = resolve(templateDir, 'index.html');
+const templateVendorDir = resolve(templateDir, 'assets/vendor');
 const sourceImagesDir = resolve(toolDir, 'images-update1');
-const targetImagesDir = resolve(toolDir, 'thiepcuoi1/assets/images');
+const clientsDir = resolve(toolDir, 'clients');
 const managedImages = [
   'photo-start.jpg', 'photo-head.jpg', 'photo-re.jpg', 'photo-dau.jpg', 'photo-end.jpg',
   ...Array.from({ length: 8 }, (_value, index) => `photo-album-${String(index + 1).padStart(2, '0')}.jpg`),
@@ -107,10 +112,6 @@ function escapeHtml(value) {
     .replaceAll("'", '&#39;');
 }
 
-function htmlWithBreaks(value) {
-  return escapeHtml(value).replace(/\r?\n/g, '<br>');
-}
-
 function dotDate(value) {
   return value.replaceAll('/', '.');
 }
@@ -129,6 +130,22 @@ function formatAddress(value) {
   if (parts.length < 2) return escapeHtml(value);
 
   return `${escapeHtml(`${parts.slice(0, -1).join(', ')},`)}<br>${escapeHtml(parts.at(-1))}`;
+}
+
+function stripDiacritics(value) {
+  return value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replaceAll('đ', 'd')
+    .replaceAll('Đ', 'D');
+}
+
+function slugifyLastWord(fullName, key) {
+  const words = fullName.trim().split(/\s+/);
+  const lastWord = words.at(-1);
+  const slug = stripDiacritics(lastWord).toLowerCase().replace(/[^a-z0-9]/g, '');
+  if (!slug) throw new Error(`Không thể tạo tên thư mục từ trường \"${key}\".`);
+  return slug;
 }
 
 function replaceExactly(html, pattern, replacement, label) {
@@ -156,64 +173,12 @@ function replaceTextBlock(html, id, innerHtml) {
   );
 }
 
-// Phiên bản đầu tiên của tool từng có lỗi thay thế, để lại "$1...$3" trong
-// HTML. Khối này giúp tự khôi phục những file đã chạy qua phiên bản đó một lần.
-function repairLegacyPlaceholderDamage(html) {
-  const blocks = [
-    ['09n4st8z', 'h1', 'com-text-block p-absolute is-animation'],
-    ['gm23y5sz', 'h5', 'com-text-block p-absolute is-animation'],
-    ['m7ltj4vm', 'h3', 'com-text-block p-absolute is-animation w-259gtbks'],
-    ['1d1q28ai', 'p', 'com-text-block p-absolute is-animation'],
-    ['00lwa1ur', 'p', 'com-text-block p-absolute is-animation'],
-    ['3z6ulhfd', 'p', 'com-text-block p-absolute is-animation'],
-    ['leshracl', 'p', 'com-text-block p-absolute is-animation'],
-    ['91u2ou0z', 'p', 'com-text-block p-absolute is-animation'],
-    ['adx2l8ur', 'p', 'com-text-block p-absolute is-animation'],
-    ['2z7tcz2j', 'h5', 'com-text-block p-absolute is-animation'],
-    ['43f6tjlo', 'h5', 'com-text-block p-absolute is-animation'],
-    ['cb49wgb3', 'h5', 'com-text-block p-absolute'],
-    ['83i510i2', 'h5', 'com-text-block p-absolute'],
-    ['b1x4e1f3', 'h5', 'com-text-block p-absolute is-animation'],
-    ['u8ko2spd', 'h5', 'com-text-block p-absolute is-animation'],
-    ['6ivzqt4u', 'p', 'com-text-block p-absolute'],
-    ['n4kdatky', 'p', 'com-text-block p-absolute'],
-    ['njhlystq', 'h3', 'com-text-block p-absolute'],
-  ];
-  const placeholders = [...html.matchAll(/\$1((?:(?!\$1)[\s\S])*)\$3/g)];
-  if (placeholders.length === 0) return html;
-  if (placeholders.length !== blocks.length) {
-    throw new Error(`HTML có ${placeholders.length} placeholder lỗi; tool chỉ có thể khôi phục đúng ${blocks.length} khối thiệp.`);
-  }
-
-  let repaired = html;
-  for (let index = placeholders.length - 1; index >= 0; index -= 1) {
-    const [whole, content] = placeholders[index];
-    const [id, tag, className] = blocks[index];
-    const opening = `<div id="w-${id}" class="${className}"><div class="text-block"><${tag} class="text-block-css full-width">`;
-    const closing = `</${tag}>`;
-    const position = repaired.lastIndexOf(whole);
-    repaired = `${repaired.slice(0, position)}${opening}${content}${closing}${repaired.slice(position + whole.length)}`;
-  }
-
-  return repaired.replace(
-    /\$1([^$]+)\$2 title="[^"]*" id="w-200ubu1h" class="com-button p-absolute is-animation" >/i,
-    (_whole, url) => `<a href="${url}" title="Xem chỉ đường đến nhà trai" id="w-200ubu1h" class="com-button p-absolute is-animation" >`,
-  );
-}
-
 function replaceCalendarReference(html) {
   const pattern = /url\((['"]?)assets\/(?:calendar-[^)'"\\]+|wedding-calendar)\.svg\1\)/gi;
   return replaceExactly(html, pattern, 'url("assets/wedding-calendar.svg")', 'đường dẫn lịch Save the Date');
 }
 
 function replaceGroomMapLink(html, mapUrl) {
-  const damagedAnchor = /\$1[^$]*\$2 title="[^"]*" id="w-200ubu1h" class="com-button p-absolute is-animation" >/i;
-  if (damagedAnchor.test(html)) {
-    return html.replace(
-      damagedAnchor,
-      `<a href="${escapeHtml(mapUrl)}" title="Xem chỉ đường đến nhà trai" id="w-200ubu1h" class="com-button p-absolute is-animation" >`,
-    );
-  }
   const anchor = /<a\b[^>]*\bid=["']w-200ubu1h["'][^>]*>/i;
   return replaceExactly(
     html,
@@ -527,34 +492,26 @@ function replaceRuntimeBlock(html, block) {
   return html.replace(/<\/body>/i, `${block}\n</body>`);
 }
 
-async function changedPersonalImages() {
+async function checkPersonalImagesExist() {
   const missing = [];
-  const changed = [];
   for (const name of managedImages) {
-    const source = resolve(sourceImagesDir, name);
-    const target = resolve(targetImagesDir, name);
-    let sourceBytes;
     try {
-      sourceBytes = await readFile(source);
+      await readFile(resolve(sourceImagesDir, name));
     } catch {
       missing.push(name);
-      continue;
-    }
-    try {
-      if (!sourceBytes.equals(await readFile(target))) changed.push(name);
-    } catch {
-      changed.push(name);
     }
   }
   if (missing.length > 0) {
     throw new Error(`images-update1 thiếu ảnh bắt buộc: ${missing.join(', ')}.`);
   }
-  return changed;
 }
 
-async function copyPersonalImages(names) {
+async function copyPersonalImages(targetImagesDir) {
   await mkdir(targetImagesDir, { recursive: true });
-  await Promise.all(names.map((name) => copyFile(resolve(sourceImagesDir, name), resolve(targetImagesDir, name))));
+  await Promise.all(managedImages.map((name) => cp(
+    resolve(sourceImagesDir, name),
+    resolve(targetImagesDir, name),
+  )));
 }
 
 const rawInfo = JSON.parse(await readFile(infoPath, 'utf8'));
@@ -592,13 +549,18 @@ const info = {
 info.date1Parts = parseDate(info.date1, 'date1');
 info.date2Parts = parseDate(info.date2, 'date2');
 if (info.date1Parts.month !== info.date2Parts.month || info.date1Parts.year !== info.date2Parts.year) {
-  throw new Error('date1 và date2 phải cùng tháng, cùng năm vì mẫu thiepcuoi1 chỉ có một lịch Save The Date.');
+  throw new Error('date1 và date2 phải cùng tháng, cùng năm vì mẫu mau1 chỉ có một lịch Save The Date.');
 }
 
+const folderName = `${slugifyLastWord(info.chu_re, 'chu_re')}-${slugifyLastWord(info.co_dau, 'co_dau')}`;
+const outputDir = resolve(clientsDir, folderName);
+const outputHtmlPath = resolve(outputDir, 'index.html');
+const outputVendorDir = resolve(outputDir, 'assets/vendor');
+const outputImagesDir = resolve(outputDir, 'assets/images');
+const outputCalendarPath = resolve(outputDir, 'assets/wedding-calendar.svg');
+
 const title = `Lễ Thành Hôn ${info.chu_re} & ${info.co_dau}`;
-let html = await readFile(htmlPath, 'utf8');
-html = repairLegacyPlaceholderDamage(html);
-html = html.replaceAll('TƯ GIA NHÀ TRAI', 'NHÀ TRAI');
+let html = await readFile(templateHtmlPath, 'utf8');
 html = replaceExactly(html, /<title>[\s\S]*?<\/title>/i, `<title>${escapeHtml(title)}</title>`, 'tiêu đề trang');
 html = replaceExactly(
   html,
@@ -633,21 +595,23 @@ const calendar = calendarSvg({
   year: info.date2Parts.year,
   markedDays: [info.date1Parts.day, info.date2Parts.day],
 });
-const changedImages = await changedPersonalImages();
+await checkPersonalImagesExist();
 
 if (dryRun) {
   console.log(`Kiểm tra thành công: ${infoPath}`);
-  console.log(`Sẽ cập nhật: ${htmlPath}`);
-  console.log(`Sẽ tạo lại: ${calendarPath}`);
-  console.log(`Sẽ đồng bộ ${changedImages.length}/${managedImages.length} ảnh từ ${sourceImagesDir}.`);
+  console.log(`Sẽ tạo/ghi đè thư mục: ${outputDir}`);
+  console.log(`- ${outputHtmlPath}`);
+  console.log(`- ${outputCalendarPath}`);
+  console.log(`- Sao chép giao diện dùng chung từ ${templateVendorDir}`);
+  console.log(`- Sao chép ${managedImages.length} ảnh từ ${sourceImagesDir}`);
 } else {
+  await mkdir(dirname(outputCalendarPath), { recursive: true });
   await Promise.all([
-    writeFile(htmlPath, html),
-    writeFile(calendarPath, calendar),
-    copyPersonalImages(changedImages),
+    writeFile(outputHtmlPath, html),
+    writeFile(outputCalendarPath, calendar),
+    cp(templateVendorDir, outputVendorDir, { recursive: true }),
+    copyPersonalImages(outputImagesDir),
   ]);
-  console.log(`Đã cập nhật thiệp cho ${info.chu_re} & ${info.co_dau}.`);
-  console.log(`- ${htmlPath}`);
-  console.log(`- ${calendarPath}`);
-  console.log(`- Đã đồng bộ ${changedImages.length}/${managedImages.length} ảnh từ images-update1.`);
+  console.log(`Đã tạo thiệp cho ${info.chu_re} & ${info.co_dau}.`);
+  console.log(`- ${outputDir}`);
 }

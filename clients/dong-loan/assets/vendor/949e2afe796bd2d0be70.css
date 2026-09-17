@@ -1,0 +1,110 @@
+@font-face {
+  font-family: 'Chonburi';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url(74c8b7e8749d7e9136e4.ttf) format('truetype');
+}
+@font-face {
+  font-family: 'Crimson Pro';
+  font-style: normal;
+  font-weight: 300;
+  font-display: swap;
+  src: url(78f92d5485649a742179.ttf) format('truetype');
+}
+@font-face {
+  font-family: 'Crimson Pro';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url(985900fe1b5bcb44c5fb.ttf) format('truetype');
+}
+@font-face {
+  font-family: 'Crimson Pro';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url(37f58cd0722cf0cd2a96.ttf) format('truetype');
+}
+@font-face {
+  font-family: 'Crimson Pro';
+  font-style: normal;
+  font-weight: 900;
+  font-display: swap;
+  src: url(2ca1d9cb8dee0ee5050c.ttf) format('truetype');
+}
+@font-face {
+  font-family: 'Judson';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url(a397d09605aa2da0b2ac.ttf) format('truetype');
+}
+@font-face {
+  font-family: 'Judson';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url(e3d5b7c1f30fed390faf.ttf) format('truetype');
+}
+@font-face {
+  font-family: 'Pattaya';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url(86741744d1c30cadadcf.ttf) format('truetype');
+}
+@font-face {
+  font-family: 'Roboto';
+  font-style: normal;
+  font-weight: 100;
+  font-stretch: normal;
+  font-display: swap;
+  src: url(fa6d7d8703e6f432d83c.ttf) format('truetype');
+}
+@font-face {
+  font-family: 'Roboto';
+  font-style: normal;
+  font-weight: 300;
+  font-stretch: normal;
+  font-display: swap;
+  src: url(212ed85bd6e1de21e824.ttf) format('truetype');
+}
+@font-face {
+  font-family: 'Roboto';
+  font-style: normal;
+  font-weight: 400;
+  font-stretch: normal;
+  font-display: swap;
+  src: url(98b910f0208e132f8fc6.ttf) format('truetype');
+}
+@font-face {
+  font-family: 'Roboto';
+  font-style: normal;
+  font-weight: 700;
+  font-stretch: normal;
+  font-display: swap;
+  src: url(a0ab9869bed1d244173b.ttf) format('truetype');
+}
+@font-face {
+  font-family: 'Roboto';
+  font-style: normal;
+  font-weight: 900;
+  font-stretch: normal;
+  font-display: swap;
+  src: url(c961e282dd6d8743dbaa.ttf) format('truetype');
+}
+@font-face {
+  font-family: 'Tinos';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url(6d4019762faf2a8c47c2.ttf) format('truetype');
+}
+@font-face {
+  font-family: 'Tinos';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url(879c2c76f22c929e8b2e.ttf) format('truetype');
+}
