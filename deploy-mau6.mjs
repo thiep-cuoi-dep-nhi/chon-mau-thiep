@@ -15,7 +15,7 @@
  */
 
 import { cp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
-import { dirname, resolve } from 'node:path';
+import { dirname, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const toolDir = dirname(fileURLToPath(import.meta.url));
@@ -32,7 +32,9 @@ Tool đọc info.json và images-update6, dùng mau6 làm mẫu để sinh thi�
 cho một cặp đôi vào thư mục clients/<ten-chu-re>-<ten-co-dau>/
 (tên không dấu, ví dụ clients/dong-loan/). Mẫu mau6 không bị thay đổi.
 Thư mục đích sẽ bị xóa sạch rồi tạo lại mỗi lần chạy, không giữ lại
-file cũ không còn được mẫu sinh ra.`);
+file cũ không còn được mẫu sinh ra.
+assets/vendor (font, css, js dùng chung) không được sao chép — trang
+sinh ra sẽ trỏ thẳng về mau6/assets/vendor để đỡ nặng repo.`);
   process.exit(0);
 }
 
@@ -557,9 +559,9 @@ if (info.date1Parts.month !== info.date2Parts.month || info.date1Parts.year !== 
 const folderName = `${slugifyLastWord(info.chu_re, 'chu_re')}-${slugifyLastWord(info.co_dau, 'co_dau')}`;
 const outputDir = resolve(clientsDir, folderName);
 const outputHtmlPath = resolve(outputDir, 'index.html');
-const outputVendorDir = resolve(outputDir, 'assets/vendor');
 const outputImagesDir = resolve(outputDir, 'assets/images');
 const outputCalendarPath = resolve(outputDir, 'assets/wedding-calendar.svg');
+const vendorHref = `${relative(outputDir, templateVendorDir).split('\\').join('/')}/`;
 
 const title = `Lễ Thành Hôn ${info.chu_re} & ${info.co_dau}`;
 let html = await readFile(templateHtmlPath, 'utf8');
@@ -591,6 +593,7 @@ html = replaceTextBlock(html, 'njhlystq', `Save The Date<br>Tháng ${String(info
 html = replaceGroomMapLink(html, info.map_chu_re);
 html = replaceCalendarReference(html);
 html = replaceRuntimeBlock(html, buildRuntimeBlock(info));
+html = html.replaceAll('assets/vendor/', vendorHref);
 
 const calendar = calendarSvg({
   month: info.date2Parts.month,
@@ -604,7 +607,7 @@ if (dryRun) {
   console.log(`Sẽ xóa sạch rồi tạo lại thư mục: ${outputDir}`);
   console.log(`- ${outputHtmlPath}`);
   console.log(`- ${outputCalendarPath}`);
-  console.log(`- Sao chép giao diện dùng chung từ ${templateVendorDir}`);
+  console.log(`- Trỏ assets/vendor về ${templateVendorDir} (không sao chép)`);
   console.log(`- Sao chép ${managedImages.length} ảnh từ ${sourceImagesDir}`);
 } else {
   await rm(outputDir, { recursive: true, force: true });
@@ -612,7 +615,6 @@ if (dryRun) {
   await Promise.all([
     writeFile(outputHtmlPath, html),
     writeFile(outputCalendarPath, calendar),
-    cp(templateVendorDir, outputVendorDir, { recursive: true }),
     copyPersonalImages(outputImagesDir),
   ]);
   console.log(`Đã tạo thiệp cho ${info.chu_re} & ${info.co_dau}.`);
