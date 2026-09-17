@@ -56,6 +56,7 @@ const infoPath = infoFlagIndex === -1
 const templateDir = resolve(toolDir, 'mau1');
 const templateHtmlPath = resolve(templateDir, 'index.html');
 const templateVendorDir = resolve(templateDir, 'assets/vendor');
+const templateImagesDir = resolve(templateDir, 'assets/images');
 const sourceImagesDir = resolve(toolDir, 'images-update1');
 const clientsDir = resolve(toolDir, 'clients');
 const managedImages = [
@@ -237,7 +238,7 @@ function calendarSvg({ month, year, markedDays }) {
 `;
 }
 
-function buildRuntimeBlock(info) {
+function buildRuntimeBlock(info, giftIconHref) {
   const serializedInfo = JSON.stringify(info)
     .replaceAll('<', '\\u003c')
     .replaceAll('>', '\\u003e')
@@ -383,7 +384,7 @@ function buildRuntimeBlock(info) {
 
       const giftActions = document.createElement('div');
       giftActions.id = 'w-wedding-gift-actions';
-      giftActions.innerHTML = '<button type="button" class="gift-groom" data-gift="groom">Gửi Mừng Cưới cho Chú Rể</button><button type="button" class="gift-bride" data-gift="bride">Gửi Mừng Cưới cho Cô Dâu</button>';
+      giftActions.innerHTML = '<button type="button" class="gift-groom" data-gift="groom" aria-label="Gửi Mừng Cưới cho Chú Rể"><img class="gift-icon" src="${giftIconHref}" alt="" aria-hidden="true"><span>Gửi Mừng Cưới cho Chú Rể</span></button><button type="button" class="gift-bride" data-gift="bride" aria-label="Gửi Mừng Cưới cho Cô Dâu"><img class="gift-icon" src="${giftIconHref}" alt="" aria-hidden="true"><span>Gửi Mừng Cưới cho Cô Dâu</span></button>';
       venueContainer.append(giftActions);
 
       const giftModal = document.createElement('div');
@@ -562,6 +563,7 @@ const outputHtmlPath = resolve(outputDir, 'index.html');
 const outputImagesDir = resolve(outputDir, 'assets/images');
 const outputCalendarPath = resolve(outputDir, 'assets/wedding-calendar.svg');
 const vendorHref = `${relative(outputDir, templateVendorDir).split('\\').join('/')}/`;
+const giftIconHref = `${relative(outputDir, templateImagesDir).split('\\').join('/')}/wedding-gift-icon-red-gold.png`;
 
 const title = `Lễ Thành Hôn ${info.chu_re} & ${info.co_dau}`;
 let html = await readFile(templateHtmlPath, 'utf8');
@@ -592,7 +594,7 @@ html = replaceTextBlock(html, 'n4kdatky', `${formatAddress(info.diachi_chu_re)}<
 html = replaceTextBlock(html, 'njhlystq', `Save The Date<br>Tháng ${String(info.date2Parts.month).padStart(2, '0')} . ${info.date2Parts.year}<br>`);
 html = replaceGroomMapLink(html, info.map_chu_re);
 html = replaceCalendarReference(html);
-html = replaceRuntimeBlock(html, buildRuntimeBlock(info));
+html = replaceRuntimeBlock(html, buildRuntimeBlock(info, giftIconHref));
 html = html.replaceAll('assets/vendor/', vendorHref);
 
 const calendar = calendarSvg({
