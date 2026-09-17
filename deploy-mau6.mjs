@@ -1,18 +1,17 @@
 #!/usr/bin/env node
 
 /**
- * Sinh thiệp cưới cho một cặp đôi từ mẫu mau1, info.json và images-update1.
+ * Sinh thiệp cưới cho một cặp đôi từ mẫu mau6, info.json và images-update6.
  *
- * Khác với update-thiepcuoi1.mjs (đã lỗi thời, sửa thẳng vào thiepcuoi1/index.html),
- * tool này không đụng vào mau1 — nó đọc mau1 làm mẫu và sinh ra một thư mục con
+ * Tool này không đụng vào mau6 — nó đọc mau6 làm mẫu và sinh ra một thư mục con
  * mới dưới clients/, đặt tên theo tên chú rể và cô dâu không dấu (ví dụ: dong-loan/).
  *
  * Chạy tại thư mục chứa file này:
- *   node deploy-mau1.mjs
+ *   node deploy-mau6.mjs
  *
  * Tùy chọn:
- *   node deploy-mau1.mjs --dry-run
- *   node deploy-mau1.mjs --info /duong-dan/info-khac.json
+ *   node deploy-mau6.mjs --dry-run
+ *   node deploy-mau6.mjs --info /duong-dan/info-khac.json
  */
 
 import { cp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
@@ -25,13 +24,13 @@ const dryRun = args.includes('--dry-run');
 
 if (args.includes('--help') || args.includes('-h')) {
   console.log(`Cách dùng:
-  node deploy-mau1.mjs
-  node deploy-mau1.mjs --dry-run
-  node deploy-mau1.mjs --info /duong-dan/info.json
+  node deploy-mau6.mjs
+  node deploy-mau6.mjs --dry-run
+  node deploy-mau6.mjs --info /duong-dan/info.json
 
-Tool đọc info.json và images-update1, dùng mau1 làm mẫu để sinh thiệp
+Tool đọc info.json và images-update6, dùng mau6 làm mẫu để sinh thiệp
 cho một cặp đôi vào thư mục clients/<ten-chu-re>-<ten-co-dau>/
-(tên không dấu, ví dụ clients/dong-loan/). Mẫu mau1 không bị thay đổi.
+(tên không dấu, ví dụ clients/dong-loan/). Mẫu mau6 không bị thay đổi.
 Thư mục đích sẽ bị xóa sạch rồi tạo lại mỗi lần chạy, không giữ lại
 file cũ không còn được mẫu sinh ra.`);
   process.exit(0);
@@ -51,15 +50,16 @@ if (unsupportedArgs.length > 0) {
 const infoPath = infoFlagIndex === -1
   ? resolve(toolDir, 'info.json')
   : resolve(process.cwd(), args[infoFlagIndex + 1]);
-const templateDir = resolve(toolDir, 'mau1');
+const templateDir = resolve(toolDir, 'mau6');
 const templateHtmlPath = resolve(templateDir, 'index.html');
 const templateVendorDir = resolve(templateDir, 'assets/vendor');
-const sourceImagesDir = resolve(toolDir, 'images-update1');
+const sourceImagesDir = resolve(toolDir, 'images-update6');
 const clientsDir = resolve(toolDir, 'clients');
 const managedImages = [
   'photo-start.jpg', 'photo-head.jpg', 'photo-re.jpg', 'photo-dau.jpg', 'photo-end.jpg',
   ...Array.from({ length: 8 }, (_value, index) => `photo-album-${String(index + 1).padStart(2, '0')}.jpg`),
   'qr_chure.jpg', 'qr_codau.jpg',
+  'opening-left-gold-red.png', 'opening-right-gold-red.png', 'wedding-gift-icon-red-gold.png',
 ];
 
 function requiredString(source, key) {
@@ -551,7 +551,7 @@ const info = {
 info.date1Parts = parseDate(info.date1, 'date1');
 info.date2Parts = parseDate(info.date2, 'date2');
 if (info.date1Parts.month !== info.date2Parts.month || info.date1Parts.year !== info.date2Parts.year) {
-  throw new Error('date1 và date2 phải cùng tháng, cùng năm vì mẫu mau1 chỉ có một lịch Save The Date.');
+  throw new Error('date1 và date2 phải cùng tháng, cùng năm vì mẫu mau6 chỉ có một lịch Save The Date.');
 }
 
 const folderName = `${slugifyLastWord(info.chu_re, 'chu_re')}-${slugifyLastWord(info.co_dau, 'co_dau')}`;
