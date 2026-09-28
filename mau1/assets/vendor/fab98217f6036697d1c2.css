@@ -224,7 +224,7 @@
   -webkit-animation-name: flash;
   animation-name: flash;
 }
-/* originally authored by Nick Pettit - https://github.com/nickpettit/glide */
+/* originally authored by Nick Pettit */
 @-webkit-keyframes pulse {
     0% {
         -webkit-transform: scale(1);
@@ -713,7 +713,7 @@
   -webkit-animation-name: tada;
   animation-name: tada;
 }
-/* originally authored by Nick Pettit - https://github.com/nickpettit/glide */
+/* originally authored by Nick Pettit */
 @-webkit-keyframes wobble {
   0% {
     -webkit-transform: translate3d(0, 0, 0);
@@ -3509,7 +3509,7 @@
   -webkit-animation-name: jackInTheBox;
   animation-name: jackInTheBox;
 }
-/* originally authored by Nick Pettit - https://github.com/nickpettit/glide */
+/* originally authored by Nick Pettit */
 @-webkit-keyframes rollIn {
   0% {
     opacity: 0;
@@ -3540,7 +3540,7 @@
   -webkit-animation-name: rollIn;
   animation-name: rollIn;
 }
-/* originally authored by Nick Pettit - https://github.com/nickpettit/glide */
+/* originally authored by Nick Pettit */
 @-webkit-keyframes rollOut {
   0% {
     opacity: 1;
