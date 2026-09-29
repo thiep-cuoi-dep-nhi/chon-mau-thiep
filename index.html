@@ -43,11 +43,24 @@
       }
 
       h1 {
-        margin: 0 0 36px;
+        margin: 0 0 14px;
         text-align: center;
         font-size: clamp(32px, 4vw, 60px);
         font-weight: 800;
         line-height: 1.1;
+      }
+
+      .contact {
+        margin: 0 0 36px;
+        text-align: center;
+        font-size: clamp(16px, 1.6vw, 20px);
+        font-weight: 600;
+        color: #1a73e8;
+      }
+
+      .contact a {
+        color: inherit;
+        white-space: nowrap;
       }
 
       .plans {
@@ -258,7 +271,8 @@
 
       @media (max-width: 640px) {
         main { padding: 34px 16px 48px; }
-        h1 { margin-bottom: 28px; }
+        h1 { margin-bottom: 10px; }
+        .contact { margin-bottom: 28px; }
         .plans {
           grid-template-columns: 1fr;
           gap: 20px;
@@ -274,6 +288,7 @@
   <body>
     <main>
       <h1>MẪU THIỆP CƯỚI ONLINE</h1>
+      <p class="contact">Nếu ưng ý, vui lòng liên hệ zalo <a href="https://zalo.me/0846902589" target="_blank" rel="noopener">0846902589</a></p>
 
       <section class="plans" aria-label="Các gói thiệp">
         <article class="plan">
