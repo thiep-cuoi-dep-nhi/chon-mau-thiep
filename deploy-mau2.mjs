@@ -1,59 +1,35 @@
 #!/usr/bin/env node
 
 /**
- * Đồng bộ thiệp thiepcuoi2 từ info.json và thư mục images-update2.
+ * Sinh thiệp cưới cho một cặp đôi từ mẫu mau2, info.json và images-update2.
  *
- * Ví dụ:
- *   node update-thiepcuoi2.mjs
- *   node update-thiepcuoi2.mjs --dry-run
- *   node update-thiepcuoi2.mjs --check
- *   node update-thiepcuoi2.mjs --info /duong-dan/info.json --images /duong-dan/images-update2
+ * Chạy tại thư mục chứa file này:
+ *   node deploy-mau2.mjs
+ *   node deploy-mau2.mjs --dry-run
+ *   node deploy-mau2.mjs --info /duong-dan/info-khac.json
  *
  * Template này render đúng 18 ảnh độc lập: ảnh mở đầu, ảnh vai trò và 11 ảnh album.
  * Từng vị trí có tệp riêng; ảnh nguồn photo-19.jpg trở đi sẽ được báo là dư.
  */
 
-import { copyFile, mkdir, readFile, readdir, rename, stat, writeFile } from 'node:fs/promises';
-import { dirname, resolve } from 'node:path';
+import { copyFile, mkdir, readFile, readdir, rm, stat, writeFile } from 'node:fs/promises';
+import { dirname, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { createHash } from 'node:crypto';
 
 const toolDir = dirname(fileURLToPath(import.meta.url));
 const args = process.argv.slice(2);
 const dryRun = args.includes('--dry-run');
-const checkOnly = args.includes('--check');
-const resolveMapEmbeds = args.includes('--resolve-map-embeds');
-
-if (dryRun && checkOnly) {
-  throw new Error('Chỉ dùng một trong hai tham số --dry-run hoặc --check.');
-}
-if (resolveMapEmbeds && (dryRun || checkOnly)) {
-  throw new Error('--resolve-map-embeds không dùng cùng --dry-run hoặc --check vì nó cần ghi map_embed_* vào info.json.');
-}
 
 if (args.includes('--help') || args.includes('-h')) {
   console.log(`Cách dùng:
-  node update-thiepcuoi2.mjs
-  node update-thiepcuoi2.mjs --dry-run
-  node update-thiepcuoi2.mjs --check
-  node update-thiepcuoi2.mjs --resolve-map-embeds
-  node update-thiepcuoi2.mjs --info /duong-dan/info.json --images /duong-dan/images-update2
+  node deploy-mau2.mjs
+  node deploy-mau2.mjs --dry-run
+  node deploy-mau2.mjs --info /duong-dan/info-khac.json
 
-Mặc định tool đọc ./info.json, lấy ảnh từ ./images-update2, rồi cập nhật:
-  - thiepcuoi2/index.html
-  - thiepcuoi2/assets/images/photo-start.jpg, photo-re.jpg, photo-dau.jpg,
-    photo-end.jpg, photo-phong1.jpg ... photo-phong3.jpg và photo-album-01.jpg ... photo-album-11.jpg
-  - thiepcuoi2/assets/images/qr_chure.jpg và qr_codau.jpg
-
---dry-run kiểm tra đầu vào và liệt kê thay đổi, không ghi file.
---check kiểm tra thiệp hiện tại đã đồng bộ hay chưa (mã trả về 2 nếu còn khác).
---resolve-map-embeds tự đọc tọa độ từ map_chu_re/map_co_dau, tạo URL OpenStreetMap
-nhúng và ghi map_embed_chu_re/map_embed_co_dau vào info.json. Tùy chọn này cần Internet.
-
-Trường bắt buộc trong info.json giống update-thiepcuoi1.mjs.
-Có thể thêm map_embed_chu_re và map_embed_co_dau (URL iframe). Để thật sự bật
-bản đồ nhúng, thêm "map_mode": "embed" vào info.json. Mặc định map_mode là
-"link" để khách không cần VPN hay truy cập dịch vụ bản đồ bên thứ ba.`);
+Tool đọc info.json và images-update2, dùng mau2 làm mẫu để sinh thiệp
+vào clients/<ten-chu-re>-<ten-co-dau>/. Thư mục đích được tạo lại
+mỗi lần chạy; mau2 không bị thay đổi. assets/vendor được dùng chung từ
+mau2/assets/vendor để tránh sao chép các tài nguyên dùng chung.`);
   process.exit(0);
 }
 
@@ -67,20 +43,20 @@ function valueAfter(flag) {
 }
 
 const infoArgument = valueAfter('--info');
-const imagesArgument = valueAfter('--images');
-const supported = new Set(['--dry-run', '--check', '--resolve-map-embeds', '--help', '-h', '--info', '--images']);
+const supported = new Set(['--dry-run', '--help', '-h', '--info']);
 const unsupported = args.filter((arg, index) => (
-  !supported.has(arg) && args[index - 1] !== '--info' && args[index - 1] !== '--images'
+  !supported.has(arg) && args[index - 1] !== '--info'
 ));
 if (unsupported.length > 0) {
   throw new Error(`Tham số không hỗ trợ: ${unsupported.join(', ')}. Dùng --help để xem cách dùng.`);
 }
 
 const infoPath = infoArgument ? resolve(process.cwd(), infoArgument) : resolve(toolDir, 'info.json');
-const sourceImagesDir = imagesArgument ? resolve(process.cwd(), imagesArgument) : resolve(toolDir, 'images-update2');
-const invitationDir = resolve(toolDir, 'thiepcuoi2');
-const htmlPath = resolve(invitationDir, 'index.html');
-const targetImagesDir = resolve(invitationDir, 'assets/images');
+const sourceImagesDir = resolve(toolDir, 'images-update2');
+const templateDir = resolve(toolDir, 'mau2');
+const templateHtmlPath = resolve(templateDir, 'index.html');
+const vendorDir = resolve(templateDir, 'assets/vendor');
+const clientsDir = resolve(toolDir, 'clients');
 const photoSlots = [
   '23vr9tl5', '1l1q24xv', '3a2ji50s', 'md62saxz', '5b2aqac5', 'ph8bqgl4',
   'yli1zwyz', 'p9fhi0b8', 'qp5baqwx', 'qeomx49q', 'a95cjgir', '0eoi4uaa',
@@ -670,10 +646,6 @@ function updateStaticHtml(html, info) {
   return replaceRuntimeBlock(html, buildRuntimeBlock(info));
 }
 
-async function sha256(path) {
-  return createHash('sha256').update(await readFile(path)).digest('hex');
-}
-
 async function isJpeg(path) {
   const bytes = await readFile(path);
   return bytes.length >= 3 && bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff;
@@ -689,7 +661,7 @@ async function readDirectoryFiles(directory, label) {
   return entries.filter((entry) => entry.isFile()).map((entry) => entry.name).sort();
 }
 
-async function inspectImages() {
+async function validateImages() {
   const sourceFiles = await readDirectoryFiles(sourceImagesDir, 'thư mục images-update2');
   const missing = requiredSourceImageNames.filter((name) => !sourceFiles.includes(name));
   if (missing.length > 0) throw new Error(`images-update2 thiếu ảnh bắt buộc: ${missing.join(', ')}.`);
@@ -707,48 +679,40 @@ async function inspectImages() {
     }
   }
 
-  const targetFiles = await readDirectoryFiles(targetImagesDir, 'thư mục thiepcuoi2/assets/images');
-  const staleTarget = targetFiles.filter((name) => (/^photo-\d+\.jpg$/i.test(name) || /^qr_(?:chure|codau)\.jpg$/i.test(name)) && !requiredImageNames.includes(name));
-  if (staleTarget.length > 0) warnings.push(`Ảnh cũ trong assets/images không thuộc template 18 ảnh: ${staleTarget.join(', ')}. Tool không tự xoá.`);
-
-  const changes = [];
-  for (const pair of imagePairs) {
-    const source = resolve(sourceImagesDir, pair.sourceName);
-    const target = resolve(targetImagesDir, pair.targetName);
-    let same = false;
-    try { same = (await sha256(source)) === (await sha256(target)); } catch { same = false; }
-    if (!same) changes.push(pair);
-  }
-  return { changes, sourceFiles, targetFiles };
+  return { sourceFiles };
 }
 
-async function copyImageAtomically({ sourceName, targetName }) {
-  const source = resolve(sourceImagesDir, sourceName);
-  const target = resolve(targetImagesDir, targetName);
-  const temporary = `${target}.updating-${process.pid}`;
-  await copyFile(source, temporary);
-  await rename(temporary, target);
-  if ((await sha256(source)) !== (await sha256(target))) throw new Error(`Kiểm tra sau khi chép thất bại: ${targetName}.`);
+async function copyImages(targetImagesDir) {
+  await mkdir(targetImagesDir, { recursive: true });
+  await Promise.all(imagePairs.map(({ sourceName, targetName }) => copyFile(
+    resolve(sourceImagesDir, sourceName),
+    resolve(targetImagesDir, targetName),
+  )));
 }
 
 function referencedImageNames(html) {
   return new Set([...html.matchAll(/assets\/images\/([A-Za-z0-9_-]+\.jpg)/g)].map((match) => match[1]));
 }
 
+function stripDiacritics(value) {
+  return value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replaceAll('đ', 'd')
+    .replaceAll('Đ', 'D');
+}
+
+function slugifyLastWord(fullName, key) {
+  const lastWord = fullName.trim().split(/\s+/).at(-1);
+  const slug = stripDiacritics(lastWord).toLowerCase().replace(/[^a-z0-9]/g, '');
+  if (!slug) throw new Error(`Không thể tạo tên thư mục từ trường "${key}".`);
+  return slug;
+}
+
 async function main() {
   let rawInfo;
   try { rawInfo = JSON.parse(await readFile(infoPath, 'utf8')); } catch (error) { throw new Error(`Không đọc được info.json (${infoPath}): ${error.message}`); }
   if (!rawInfo || Array.isArray(rawInfo) || typeof rawInfo !== 'object') throw new Error('info.json phải là một JSON object.');
-
-  const generatedEmbeds = [];
-  if (resolveMapEmbeds) {
-    for (const [mapKey, embedKey] of [['map_chu_re', 'map_embed_chu_re'], ['map_co_dau', 'map_embed_co_dau']]) {
-      if (optionalUrl(rawInfo, embedKey)) continue;
-      const mapUrl = normalizeUrl(requiredString(rawInfo, mapKey), mapKey);
-      rawInfo[embedKey] = await resolveGoogleMapEmbed(mapUrl, mapKey);
-      generatedEmbeds.push(embedKey);
-    }
-  }
 
   const info = {
     chu_re: requiredString(rawInfo, 'chu_re'), co_dau: requiredString(rawInfo, 'co_dau'),
@@ -769,52 +733,43 @@ async function main() {
   if (info.map_mode === 'embed' && !info.map_embed_co_dau) warnings.push('Thiếu map_embed_co_dau: nhà gái không thể hiện bản đồ nhúng.');
   if (info.map_mode === 'link' && (info.map_embed_chu_re || info.map_embed_co_dau)) warnings.push('map_embed_* đang có nhưng bị tắt theo map_mode="link" để thiệp không phụ thuộc VPN/dịch vụ bản đồ bên ngoài.');
 
-  const originalHtml = await readFile(htmlPath, 'utf8');
-  const updatedHtml = updateStaticHtml(originalHtml, info);
-  const imageReport = await inspectImages();
-  const referenced = referencedImageNames(updatedHtml);
+  const sourceHtml = await readFile(templateHtmlPath, 'utf8');
+  let html = updateStaticHtml(sourceHtml, info);
+  await validateImages();
+  const referenced = referencedImageNames(html);
   const unreferenced = requiredImageNames.filter((name) => !referenced.has(name));
   const unexpectedReferences = [...referenced].filter((name) => !requiredImageNames.includes(name));
   if (unreferenced.length > 0) throw new Error(`index.html không tham chiếu các ảnh bắt buộc: ${unreferenced.join(', ')}.`);
   if (unexpectedReferences.length > 0) warnings.push(`index.html còn tham chiếu ảnh ngoài bộ 18 ảnh: ${unexpectedReferences.join(', ')}.`);
 
-  const htmlChanged = originalHtml !== updatedHtml;
-  console.log(`Đã kiểm tra: ${infoPath}`);
-  console.log(`- index.html: ${htmlChanged ? 'cần cập nhật' : 'đã khớp'}`);
-  console.log(`- ảnh cá nhân: ${imageReport.changes.length ? `cần chép ${imageReport.changes.length}/${requiredImageNames.length} tệp` : 'đã khớp'}`);
-  if (generatedEmbeds.length > 0) console.log(`- đã tạo tự động: ${generatedEmbeds.join(', ')}`);
+  const folderName = `${slugifyLastWord(info.chu_re, 'chu_re')}-${slugifyLastWord(info.co_dau, 'co_dau')}`;
+  const outputDir = resolve(clientsDir, folderName);
+  const outputHtmlPath = resolve(outputDir, 'index.html');
+  const outputImagesDir = resolve(outputDir, 'assets/images');
+  const vendorHref = `${relative(outputDir, vendorDir).split('\\').join('/')}/`;
+  html = html.replaceAll('assets/vendor/', vendorHref);
+
   if (warnings.length > 0) {
     console.log('Cảnh báo cần biết:');
     warnings.forEach((warning) => console.log(`- ${warning}`));
   }
 
-  if (checkOnly) {
-    if (htmlChanged || imageReport.changes.length > 0) {
-      console.log('Kết quả: CHƯA ĐỒNG BỘ. Chạy không có --check để cập nhật.');
-      process.exitCode = 2;
-    } else console.log('Kết quả: ĐÃ ĐỒNG BỘ.');
-    return;
-  }
   if (dryRun) {
-    console.log('Dry run: không có file nào được thay đổi.');
+    console.log(`Kiểm tra thành công: ${infoPath}`);
+    console.log(`Sẽ tạo lại thư mục: ${outputDir}`);
+    console.log(`- ${outputHtmlPath}`);
+    console.log(`- Sao chép ${requiredImageNames.length} ảnh từ ${sourceImagesDir}`);
+    console.log(`- Trỏ assets/vendor về ${vendorDir} (không sao chép)`);
     return;
   }
 
-  await mkdir(targetImagesDir, { recursive: true });
-  for (const name of imageReport.changes) await copyImageAtomically(name);
-  if (htmlChanged) {
-    const temporaryHtml = `${htmlPath}.updating-${process.pid}`;
-    await writeFile(temporaryHtml, updatedHtml);
-    await rename(temporaryHtml, htmlPath);
-  }
-  if (generatedEmbeds.length > 0) {
-    const temporaryInfo = `${infoPath}.updating-${process.pid}`;
-    await writeFile(temporaryInfo, `${JSON.stringify(rawInfo, null, 2)}\n`);
-    await rename(temporaryInfo, infoPath);
-  }
-  console.log(`Đã cập nhật thiepcuoi2 cho ${info.chu_re} & ${info.co_dau}.`);
-  console.log(`- ${htmlPath}`);
-  console.log(`- ${targetImagesDir}`);
+  await rm(outputDir, { recursive: true, force: true });
+  await copyImages(outputImagesDir);
+  await writeFile(outputHtmlPath, html);
+
+  console.log(`Đã sinh thiệp mẫu 2 cho ${info.chu_re} & ${info.co_dau}.`);
+  console.log(`- ${outputHtmlPath}`);
+  console.log(`- Ảnh cá nhân: ${requiredImageNames.length} ảnh trong ${outputImagesDir}.`);
 }
 
 main().catch((error) => {

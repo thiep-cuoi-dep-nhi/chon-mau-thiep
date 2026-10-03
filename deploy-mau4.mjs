@@ -1,14 +1,14 @@
 #!/usr/bin/env node
 
 /**
- * Đồng bộ thiepcuoi3 từ info.json và images-update3.
+ * Sinh thiệp cưới cho một cặp đôi từ mẫu mau4, info.json và images-update4.
  *
  * Chạy tại thư mục chứa file này:
- *   node update-thiepcuoi3.mjs
- *   node update-thiepcuoi3.mjs --dry-run
- *   node update-thiepcuoi3.mjs --info /duong-dan/info-khac.json
+ *   node deploy-mau4.mjs
+ *   node deploy-mau4.mjs --dry-run
+ *   node deploy-mau4.mjs --info /duong-dan/info-khac.json
  *
- * Mẫu 3 dùng 15 ảnh photo và 2 mã QR từ bộ ảnh riêng của mẫu 3.
+ * Mẫu 4 dùng 15 ảnh photo và 2 mã QR từ bộ ảnh riêng của mẫu 4.
  */
 
 import {
@@ -21,7 +21,7 @@ import {
   writeFile,
 } from 'node:fs/promises';
 import { constants } from 'node:fs';
-import { dirname, resolve } from 'node:path';
+import { dirname, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const toolDir = dirname(fileURLToPath(import.meta.url));
@@ -31,12 +31,14 @@ const infoFlagIndex = args.indexOf('--info');
 
 if (args.includes('--help') || args.includes('-h')) {
   console.log(`Cách dùng:
-  node update-thiepcuoi3.mjs
-  node update-thiepcuoi3.mjs --dry-run
-  node update-thiepcuoi3.mjs --info /duong-dan/info-khac.json
+  node deploy-mau4.mjs
+  node deploy-mau4.mjs --dry-run
+  node deploy-mau4.mjs --info /duong-dan/info-khac.json
 
-Tool cập nhật thiepcuoi3/index.html, đồng bộ 15 ảnh photo-01.jpg đến
-photo-15.jpg và hai QR qr_chure.jpg, qr_codau.jpg từ images-update3.`);
+Tool đọc info.json và images-update4, dùng mau4 làm mẫu để sinh thiệp
+vào clients/<ten-chu-re>-<ten-co-dau>/. Thư mục đích được tạo lại
+mỗi lần chạy; mau4 không bị thay đổi. assets/vendor được dùng chung từ
+mau4/assets/vendor để tránh sao chép các tài nguyên dùng chung.`);
   process.exit(0);
 }
 
@@ -53,11 +55,11 @@ if (unsupportedArgs.length) {
 const infoPath = infoFlagIndex === -1
   ? resolve(toolDir, 'info.json')
   : resolve(process.cwd(), args[infoFlagIndex + 1]);
-const invitationDir = resolve(toolDir, 'thiepcuoi3');
-const htmlPath = resolve(invitationDir, 'index.html');
-const sourceImagesDir = resolve(toolDir, 'images-update3');
-const targetImagesDir = resolve(invitationDir, 'assets/images');
-const vendorDir = resolve(invitationDir, 'assets/vendor');
+const templateDir = resolve(toolDir, 'mau4');
+const templateHtmlPath = resolve(templateDir, 'index.html');
+const sourceImagesDir = resolve(toolDir, 'images-update4');
+const vendorDir = resolve(templateDir, 'assets/vendor');
+const clientsDir = resolve(toolDir, 'clients');
 const targetPhotoFiles = [
   'photo-start.jpg', 'photo-re.jpg', 'photo-dau.jpg', 'photo-phong1.jpg', 'photo-ngang1.jpg',
   'photo-phong2.jpg', 'photo-ngang2.jpg', 'photo-phong3.jpg', 'photo-phong4.jpg', 'photo-end.jpg',
@@ -351,14 +353,14 @@ function removeWishAndRsvpSections(html) {
 }
 
 function insertGiftEntry(html) {
-  html = html.replace(/<!-- thiepcuoi3-gift-entry:start -->[\s\S]*?<!-- thiepcuoi3-gift-entry:end -->/g, '');
-  const entry = `<!-- thiepcuoi3-gift-entry:start -->
+  html = html.replace(/<!-- thiepcuoi(?:3|4)-gift-entry:start -->[\s\S]*?<!-- thiepcuoi(?:3|4)-gift-entry:end -->/g, '');
+  const entry = `<!-- thiepcuoi4-gift-entry:start -->
 <div id="SECTION_GIFT_ENTRY" class="ladi-section">
   <div class="ladi-container">
     <button id="GIFT_ENTRY_BUTTON" type="button">Gửi mừng cưới</button>
   </div>
 </div>
-<!-- thiepcuoi3-gift-entry:end -->`;
+<!-- thiepcuoi4-gift-entry:end -->`;
   return replaceOne(html, /<div id="SECTION9"/i, (sectionStart) => `${entry}${sectionStart}`, 'vị trí nút gửi mừng cưới');
 }
 
@@ -373,30 +375,30 @@ function insertLocalMusic(html) {
   // Bản Ladipage gốc chèn cả nhạc qua jsDelivr lẫn đoạn mã chặn thao tác.
   // Xoá riêng bản nhạc đã do tool quản lý trước đó rồi thêm lại tệp MP3 cục bộ,
   // để chạy lại tool không tạo nhiều nút nhạc và vẫn dùng được khi offline.
-  html = html.replace(/<!-- thiepcuoi3-music:start -->[\s\S]*?<!-- thiepcuoi3-music:end -->/g, '');
-  const music = `<!-- thiepcuoi3-music:start -->
-<style id="thiepcuoi3-music-style">
-  #thiepcuoi3-music-toggle {
+  html = html.replace(/<!-- thiepcuoi(?:3|4)-music:start -->[\s\S]*?<!-- thiepcuoi(?:3|4)-music:end -->/g, '');
+  const music = `<!-- thiepcuoi4-music:start -->
+<style id="thiepcuoi4-music-style">
+  #thiepcuoi4-music-toggle {
     position: fixed; z-index: 1000000001; left: 20px; bottom: 20px;
     width: 50px; height: 50px; border: 0; border-radius: 50%;
     display: flex; align-items: center; justify-content: center;
-    background: #600202; color: #fff; box-shadow: 0 5px 14px rgba(0, 0, 0, .28);
+    background: #1e6b45; color: #fff; box-shadow: 0 5px 14px rgba(0, 0, 0, .28);
     cursor: pointer; -webkit-tap-highlight-color: transparent;
   }
-  #thiepcuoi3-music-toggle .music-icon { font: 28px/1 Arial, sans-serif; transform: translateY(-1px); }
-  #thiepcuoi3-music-toggle.is-playing { animation: thiepcuoi3-music-pulse 1.8s ease-in-out infinite; }
-  @keyframes thiepcuoi3-music-pulse { 50% { box-shadow: 0 0 0 8px rgba(96, 2, 2, .16), 0 5px 14px rgba(0, 0, 0, .28); } }
+  #thiepcuoi4-music-toggle .music-icon { font: 28px/1 Arial, sans-serif; transform: translateY(-1px); }
+  #thiepcuoi4-music-toggle.is-playing { animation: thiepcuoi4-music-pulse 1.8s ease-in-out infinite; }
+  @keyframes thiepcuoi4-music-pulse { 50% { box-shadow: 0 0 0 8px rgba(30, 107, 69, .16), 0 5px 14px rgba(0, 0, 0, .28); } }
 </style>
-<audio id="thiepcuoi3-background-music" loop preload="metadata">
+<audio id="thiepcuoi4-background-music" loop preload="metadata">
   <source src="assets/vendor/i-do-911.mp3" type="audio/mpeg">
 </audio>
-<button id="thiepcuoi3-music-toggle" type="button" title="Bật nhạc" aria-label="Bật nhạc" aria-pressed="false">
+<button id="thiepcuoi4-music-toggle" type="button" title="Bật nhạc" aria-label="Bật nhạc" aria-pressed="false">
   <span class="music-icon" aria-hidden="true">♪</span>
 </button>
-<script id="thiepcuoi3-music-runtime">
+<script id="thiepcuoi4-music-runtime">
 (() => {
-  const audio = document.getElementById('thiepcuoi3-background-music');
-  const button = document.getElementById('thiepcuoi3-music-toggle');
+  const audio = document.getElementById('thiepcuoi4-background-music');
+  const button = document.getElementById('thiepcuoi4-music-toggle');
   if (!audio || !button) return;
   const sync = () => {
     const playing = !audio.paused;
@@ -421,7 +423,7 @@ function insertLocalMusic(html) {
   sync();
 })();
 </script>
-<!-- thiepcuoi3-music:end -->`;
+<!-- thiepcuoi4-music:end -->`;
   return replaceOne(html, /<\/body>/i, (closingTag) => `${music}${closingTag}`, 'vị trí nhạc nền');
 }
 
@@ -490,7 +492,7 @@ function localizePersonalImages(html) {
     ['#IMAGE21 > .ladi-image > .ladi-image-background', photo(9)],
   ]);
   if (new Set(directImages.values()).size !== directImages.size) {
-    throw new Error('Mapping ảnh trực tiếp của mẫu 3 bị trùng; mỗi vị trí phải dùng một ảnh riêng.');
+    throw new Error('Mapping ảnh trực tiếp của mẫu 4 bị trùng; mỗi vị trí phải dùng một ảnh riêng.');
   }
   for (const [selector, path] of directImages) html = replaceBackground(html, selector, path, selector);
   for (let index = 0; index < targetPhotoFiles.length; index += 1) {
@@ -510,17 +512,22 @@ function disableNativeCountdown(html) {
 }
 
 function removePreviousRuntime(html) {
-  return html.replace(/<!-- thiepcuoi3-runtime:start -->[\s\S]*?<!-- thiepcuoi3-runtime:end -->/g, '');
+  return html.replace(/<!-- thiepcuoi(?:3|4)-runtime:start -->[\s\S]*?<!-- thiepcuoi(?:3|4)-runtime:end -->/g, '');
 }
 
 function clientRuntime(data) {
   const payload = JSON.stringify(data).replaceAll('<', '\\u003c').replaceAll('</script', '<\\/script');
-  return `<!-- thiepcuoi3-runtime:start -->
-<style id="thiepcuoi3-runtime-style">
+  return `<!-- thiepcuoi4-runtime:start -->
+<style id="thiepcuoi4-runtime-style">
+  /* Mẫu 4: phong bì đã là PNG xanh riêng; chỉ đổi sắc các họa tiết đỏ,
+     để không làm con dấu kim loại chuyển sang xanh. */
+  #IMAGE4, #IMAGE11, #IMAGE26 { filter: hue-rotate(115deg) saturate(1.15); }
+  .left-door { filter: drop-shadow(8px 0 15px rgba(0, 0, 0, .6)) !important; }
+  .right-door { filter: drop-shadow(-8px 0 15px rgba(0, 0, 0, .5)) !important; }
   #HEADLINE6 { width: 370px !important; left: .5px !important; }
   #HEADLINE6 > .ladi-headline { white-space: normal; font-size: 18px !important; line-height: 1.6 !important; text-align: center !important; }
   #HEADLINE21 { display: block !important; width: 370px !important; left: .5px !important; }
-  #HEADLINE21 > .ladi-headline { font-family: QWxleEJydXNoLVJlZVsYXIudHRm !important; font-size: 38px !important; font-weight: 400 !important; font-style: normal !important; line-height: 1.25 !important; color: rgb(96, 2, 2) !important; text-decoration: none !important; text-align: center !important; }
+  #HEADLINE21 > .ladi-headline { font-family: QWxleEJydXNoLVJlZVsYXIudHRm !important; font-size: 38px !important; font-weight: 400 !important; font-style: normal !important; line-height: 1.25 !important; color: rgb(30, 107, 69) !important; text-decoration: none !important; text-align: center !important; }
   /* Chừa một dòng rõ ràng dưới tên khách; dời phần nội dung phía dưới cùng
      khoảng cách tương ứng để không chồng lên tên cô dâu/chú rể hoặc ngày giờ. */
   #HEADLINE11 { top: 159.424px !important; }
@@ -557,17 +564,17 @@ function clientRuntime(data) {
   #IMAGE22 > .ladi-image > .ladi-image-background, #IMAGE23 > .ladi-image > .ladi-image-background { background-size: contain !important; background-repeat: no-repeat !important; background-position: center !important; }
   #IMAGE22 > .ladi-image > .ladi-image-background { background-image: url("assets/images/qr_chure.jpg") !important; }
   #IMAGE23 > .ladi-image > .ladi-image-background { background-image: url("assets/images/qr_codau.jpg") !important; }
-  #BUTTON7 > .ladi-button > .ladi-button-background, #BUTTON9 > .ladi-button > .ladi-button-background { background-color: #600202 !important; }
+  #BUTTON7 > .ladi-button > .ladi-button-background, #BUTTON9 > .ladi-button > .ladi-button-background { background-color: #1e6b45 !important; }
   #BUTTON_TEXT7 > .ladi-headline, #BUTTON_TEXT9 > .ladi-headline { color: #fff !important; }
   /* Bỏ dải thương hiệu/footer vốn đè lên ảnh cảm ơn. */
   #GROUP11 { display: none !important; }
   #SECTION_GIFT_ENTRY { height: 126px; background: #fffaf7; }
   #SECTION_GIFT_ENTRY .ladi-container { width: 420px; height: 126px; display: flex; align-items: center; justify-content: center; }
-  #GIFT_ENTRY_BUTTON { border: 0; border-radius: 26px; min-width: 224px; padding: 14px 28px; background: #600202; color: #fff; font: 700 18px "Maven Pro", sans-serif; cursor: pointer; box-shadow: 0 8px 18px rgba(96, 2, 2, .28); }
+  #GIFT_ENTRY_BUTTON { border: 0; border-radius: 26px; min-width: 224px; padding: 14px 28px; background: #1e6b45; color: #fff; font: 700 18px "Maven Pro", sans-serif; cursor: pointer; box-shadow: 0 8px 18px rgba(30, 107, 69, .28); }
   #GIFT_ENTRY_BUTTON:active { transform: translateY(2px); }
-  #GIFT_POPUP_CLOSE { position: absolute; z-index: 9000000090; top: 8px; right: 8px; width: 30px; height: 30px; border: 0; border-radius: 50%; background: #600202; color: #fff; font-size: 24px; line-height: 26px; cursor: pointer; }
+  #GIFT_POPUP_CLOSE { position: absolute; z-index: 9000000090; top: 8px; right: 8px; width: 30px; height: 30px; border: 0; border-radius: 50%; background: #1e6b45; color: #fff; font-size: 24px; line-height: 26px; cursor: pointer; }
 </style>
-<script id="thiepcuoi3-runtime">
+<script id="thiepcuoi4-runtime">
 (() => {
   const data = ${payload};
   const params = new URLSearchParams(window.location.search);
@@ -688,7 +695,7 @@ function clientRuntime(data) {
   window.addEventListener('load', apply, { once: true });
 })();
 </script>
-<!-- thiepcuoi3-runtime:end -->`;
+<!-- thiepcuoi4-runtime:end -->`;
 }
 
 function updateHtml(source, data) {
@@ -780,44 +787,43 @@ async function validateVendor() {
   const missing = [];
   for (const file of requiredVendor) if (!await exists(resolve(vendorDir, file))) missing.push(file);
   if (missing.length) {
-    throw new Error(`Thiếu ${missing.length} tài nguyên cục bộ trong thiepcuoi3/assets/vendor: ${missing.join(', ')}.`);
+    throw new Error(`Thiếu ${missing.length} tài nguyên cục bộ trong mau4/assets/vendor: ${missing.join(', ')}.`);
   }
 }
 
-async function syncImages() {
+function stripDiacritics(value) {
+  return value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replaceAll('đ', 'd')
+    .replaceAll('Đ', 'D');
+}
+
+function slugifyLastWord(fullName, key) {
+  const lastWord = fullName.trim().split(/\s+/).at(-1);
+  const slug = stripDiacritics(lastWord).toLowerCase().replace(/[^a-z0-9]/g, '');
+  if (!slug) throw new Error(`Không thể tạo tên thư mục từ trường "${key}".`);
+  return slug;
+}
+
+async function validateImages() {
   const missing = [];
   for (const { source } of imageMappings) if (!await exists(resolve(sourceImagesDir, source))) missing.push(source);
   if (missing.length) {
-    throw new Error(`images-update3 thiếu: ${missing.join(', ')}. Mẫu 3 cần 15 ảnh photo và 2 QR.`);
+    throw new Error(`images-update4 thiếu: ${missing.join(', ')}. Mẫu 4 cần 15 ảnh photo và 2 QR.`);
   }
-  const current = await readdir(targetImagesDir, { withFileTypes: true }).catch(() => []);
-  const extras = current.filter((entry) => entry.isFile() && !managedImages.includes(entry.name) && entry.name !== '.DS_Store').map((entry) => entry.name);
-  const changed = [];
-  for (const mapping of imageMappings) {
-    const sourcePath = resolve(sourceImagesDir, mapping.source);
-    const targetPath = resolve(targetImagesDir, mapping.target);
-    if (!await exists(targetPath)) {
-      changed.push(mapping);
-      continue;
-    }
-    const [sourceBuffer, targetBuffer] = await Promise.all([readFile(sourcePath), readFile(targetPath)]);
-    if (!sourceBuffer.equals(targetBuffer)) changed.push(mapping);
-  }
-  if (dryRun) return { extras, removed: [], copied: changed };
+}
 
+async function copyImages(targetImagesDir) {
   await mkdir(targetImagesDir, { recursive: true });
-  const removed = [];
-  for (const entry of current) {
-    if (!entry.isFile() || entry.name === '.DS_Store' || managedImages.includes(entry.name)) continue;
-    await rm(resolve(targetImagesDir, entry.name));
-    removed.push(entry.name);
-  }
-  for (const { source, target } of changed) await copyFile(resolve(sourceImagesDir, source), resolve(targetImagesDir, target));
-  return { extras, removed, copied: changed };
+  await Promise.all(imageMappings.map(({ source, target }) => copyFile(
+    resolve(sourceImagesDir, source),
+    resolve(targetImagesDir, target),
+  )));
 }
 
 async function main() {
-  const [infoText, sourceHtml] = await Promise.all([readFile(infoPath, 'utf8'), readFile(htmlPath, 'utf8')]);
+  const [infoText, sourceHtml] = await Promise.all([readFile(infoPath, 'utf8'), readFile(templateHtmlPath, 'utf8')]);
   let info;
   try {
     info = JSON.parse(infoText);
@@ -826,10 +832,16 @@ async function main() {
   }
   const data = invitationData(info);
   await validateVendor();
-  const imageReport = await syncImages();
-  const html = updateHtml(sourceHtml, data);
+  await validateImages();
+  const folderName = `${slugifyLastWord(data.groom, 'chu_re')}-${slugifyLastWord(data.bride, 'co_dau')}`;
+  const outputDir = resolve(clientsDir, folderName);
+  const outputHtmlPath = resolve(outputDir, 'index.html');
+  const outputImagesDir = resolve(outputDir, 'assets/images');
+  const vendorHref = `${relative(outputDir, vendorDir).split('\\').join('/')}/`;
+  let html = updateHtml(sourceHtml, data);
+  html = html.replaceAll('assets/vendor/', vendorHref);
   const oldLinks = /(?:nhacoh|thiepcuoionlinenhacohy|tiktok\.com\/@nhacohyonline|facebook\.com\/thiepcuoionlinenhacohy)/i.test(html);
-  if (oldLinks) throw new Error('Vẫn còn liên kết hoặc nhãn hiệu cũ trong index.html; không ghi file.');
+  if (oldLinks) throw new Error('Vẫn còn liên kết hoặc nhãn hiệu cũ trong bản thiệp được sinh.');
   // Nút chỉ đường là liên kết do khách chủ động bấm, không phải tài nguyên trang tải.
   const remoteImports = [...html.matchAll(/(?:src|href)=["']https?:\/\//gi)]
     .filter((match) => !html.slice(match.index, match.index + 100).includes('maps.app.goo.gl'));
@@ -837,21 +849,30 @@ async function main() {
     const positions = remoteImports.map((match) => html.slice(Math.max(0, match.index - 80), match.index + 180)).join(' | ');
     throw new Error(`Vẫn còn ${remoteImports.length} import từ Internet trong index.html: ${positions}`);
   }
-  if (!dryRun) await writeFile(htmlPath, html);
+  if (dryRun) {
+    console.log(`Kiểm tra thành công: ${infoPath}`);
+    console.log(`Sẽ tạo lại thư mục: ${outputDir}`);
+    console.log(`- ${outputHtmlPath}`);
+    console.log(`- Sao chép ${managedImages.length} ảnh từ ${sourceImagesDir}`);
+    console.log(`- Trỏ assets/vendor về ${vendorDir} (không sao chép)`);
+    return;
+  }
 
-  console.log(`${dryRun ? '[dry-run] ' : ''}Đã ${dryRun ? 'kiểm tra' : 'cập nhật'} thiepcuoi3.`);
+  await rm(outputDir, { recursive: true, force: true });
+  await copyImages(outputImagesDir);
+  await writeFile(outputHtmlPath, html);
+
+  console.log(`Đã sinh thiệp mẫu 4 cho ${data.groom} & ${data.bride}.`);
+  console.log(`- ${outputHtmlPath}`);
   console.log(`- Sự kiện mặc định: ngày 2 — ${data.event2.date}, ${data.event2.time}.`);
   console.log('- URL hỗ trợ: ?name=Bạn%20Loan&ngay=1|2&addr=dau|re (mặc định: Quý Khách, ngày 2, nhà trai).');
-  console.log(`- Ảnh cá nhân: ${photoCount} ảnh JPEG + 2 QR trong thiepcuoi3/assets/images.`);
-  if (imageReport.extras.length) console.log(`- Đã phát hiện ảnh ngoài danh sách quản lý: ${imageReport.extras.join(', ')}.`);
-  if (!dryRun && imageReport.removed.length) console.log(`- Đã xóa ${imageReport.removed.length} ảnh thừa trong assets/images.`);
-  if (!dryRun && imageReport.copied.length) console.log(`- Đã đồng bộ ${imageReport.copied.length} ảnh thay đổi.`);
+  console.log(`- Ảnh cá nhân: ${photoCount} ảnh JPEG + 2 QR trong ${outputImagesDir}.`);
   const unavailableFields = [
     'bo_chu_re', 'me_chu_re', 'bo_co_dau', 'me_co_dau',
     'map_embed_chu_re', 'map_embed_co_dau', 'map_mode',
   ].filter((key) => optionalString(info, key));
   if (unavailableFields.length) {
-    console.log(`- Lưu ý: mẫu 3 không có vùng hiển thị riêng cho ${unavailableFields.join(', ')}; các trường này không được đưa lên thiệp.`);
+    console.log(`- Lưu ý: mẫu 4 không có vùng hiển thị riêng cho ${unavailableFields.join(', ')}; các trường này không được đưa lên thiệp.`);
   }
 }
 

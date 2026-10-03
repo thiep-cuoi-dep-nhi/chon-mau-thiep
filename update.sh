@@ -1,5 +1,12 @@
-node deploy-mau1.mjs
-node update-thiepcuoi2.mjs --resolve-map-embeds
-node update-thiepcuoi3.mjs
-node update-thiepcuoi4.mjs
-node update-thiepcuoi5.mjs
+#!/usr/bin/env bash
+set -euo pipefail
+
+template="${1:-1}"
+if [ "$#" -gt 0 ]; then shift; fi
+case "$template" in
+  1|2|3|4|5) node "deploy-mau${template}.mjs" "$@" ;;
+  *)
+    echo "Cách dùng: ./update.sh [1|2|3|4|5] [--dry-run|--info /duong-dan/info.json]" >&2
+    exit 1
+    ;;
+esac
