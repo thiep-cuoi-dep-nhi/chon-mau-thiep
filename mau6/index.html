@@ -1357,11 +1357,24 @@ document.addEventListener("keydown", function (event) {
     clip-path: inset(0 0 88% 0);
   }
 
-  /* Bìa đầu kết thúc gọn dưới khung nền. */
+  /* Chừa phần cuối bìa đầu cho lời mời và tên khách. */
   #w-l2y5ihxw,
   #w-l2y5ihxw .section-wrapper,
   #w-l2y5ihxw .section-container {
-    height: 800px !important;
+    height: 930px !important;
+  }
+
+  /* Bìa gốc vẫn giữ nguyên ở 800px; chỉ nối viền trong phần lời mời phía dưới. */
+  #w-l2y5ihxw::after {
+    content: "";
+    position: absolute;
+    top: 800px;
+    left: 0;
+    width: 421px;
+    height: 130px;
+    z-index: 2;
+    pointer-events: none;
+    background: center bottom / 421px 802px no-repeat url("assets/vendor/74b65c8d1789dd511dbb.png");
   }
 
   /* Ảnh cưới ở lớp dưới, lộ ra qua lòng khung tròn đã được khoét. */
@@ -1489,20 +1502,46 @@ document.addEventListener("keydown", function (event) {
     -webkit-animation: none !important;
   }
 
+  /* Lời mời nằm sau ngày tổ chức và trước phần báo tin lễ thành hôn. */
+  #w-dtzvzhcm {
+    display: block !important;
+    top: 810px !important;
+    left: 90px !important;
+    width: 240px !important;
+    height: 28px !important;
+    z-index: 5 !important;
+  }
+
+  #w-vga9jtua {
+    display: block !important;
+    top: 834px !important;
+    left: 22px !important;
+    width: 376px !important;
+    height: 54px !important;
+    z-index: 5 !important;
+  }
+
+  #w-vga9jtua .text-block-css {
+    font-size: 46px !important;
+    line-height: 1.15 !important;
+  }
+
+  #w-r1ii45ie {
+    display: block !important;
+    top: 888px !important;
+    left: 119.5px !important;
+    width: 181px !important;
+    z-index: 5 !important;
+  }
+
   #w-gmum9ujw,
   #w-09n4st8z,
-  #w-dtzvzhcm,
-  #w-vga9jtua,
-  #w-r1ii45ie,
   #w-jihpgbs7 { z-index: 3; }
   #w-aa8hqjhd { z-index: 4; }
 
-  /* Bìa đầu chỉ giữ ảnh cưới, khung hoa – vàng và nơ. */
+  /* Bìa đầu chỉ giữ ảnh cưới, khung hoa – vàng, nơ và lời mời khách. */
   #w-gmum9ujw,
   #w-rsb2oeuu,
-  #w-dtzvzhcm,
-  #w-vga9jtua,
-  #w-r1ii45ie,
   #w-jihpgbs7 {
     display: none !important;
   }
