@@ -15,6 +15,7 @@
 import { copyFile, mkdir, readFile, readdir, rm, stat, writeFile } from 'node:fs/promises';
 import { dirname, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { createLinkPage } from './create-link-page.mjs';
 
 const toolDir = dirname(fileURLToPath(import.meta.url));
 const args = process.argv.slice(2);
@@ -746,6 +747,7 @@ async function main() {
   const outputDir = resolve(clientsDir, folderName);
   const outputHtmlPath = resolve(outputDir, 'index.html');
   const outputImagesDir = resolve(outputDir, 'assets/images');
+  const outputCreateLinkPath = resolve(outputDir, 'create-link/index.html');
   const vendorHref = `${relative(outputDir, vendorDir).split('\\').join('/')}/`;
   html = html.replaceAll('assets/vendor/', vendorHref);
 
@@ -758,6 +760,7 @@ async function main() {
     console.log(`Kiểm tra thành công: ${infoPath}`);
     console.log(`Sẽ tạo lại thư mục: ${outputDir}`);
     console.log(`- ${outputHtmlPath}`);
+    console.log(`- ${outputCreateLinkPath}`);
     console.log(`- Sao chép ${requiredImageNames.length} ảnh từ ${sourceImagesDir}`);
     console.log(`- Trỏ assets/vendor về ${vendorDir} (không sao chép)`);
     return;
@@ -765,10 +768,15 @@ async function main() {
 
   await rm(outputDir, { recursive: true, force: true });
   await copyImages(outputImagesDir);
-  await writeFile(outputHtmlPath, html);
+  await mkdir(dirname(outputCreateLinkPath), { recursive: true });
+  await Promise.all([
+    writeFile(outputHtmlPath, html),
+    writeFile(outputCreateLinkPath, createLinkPage(info)),
+  ]);
 
   console.log(`Đã sinh thiệp mẫu 2 cho ${info.chu_re} & ${info.co_dau}.`);
   console.log(`- ${outputHtmlPath}`);
+  console.log(`- ${outputCreateLinkPath}`);
   console.log(`- Ảnh cá nhân: ${requiredImageNames.length} ảnh trong ${outputImagesDir}.`);
 }
 

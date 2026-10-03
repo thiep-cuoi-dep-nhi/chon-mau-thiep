@@ -17,6 +17,7 @@
 import { cp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { dirname, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { createLinkPage } from './create-link-page.mjs';
 
 const toolDir = dirname(fileURLToPath(import.meta.url));
 const args = process.argv.slice(2);
@@ -561,6 +562,7 @@ const outputDir = resolve(clientsDir, folderName);
 const outputHtmlPath = resolve(outputDir, 'index.html');
 const outputImagesDir = resolve(outputDir, 'assets/images');
 const outputCalendarPath = resolve(outputDir, 'assets/wedding-calendar.svg');
+const outputCreateLinkPath = resolve(outputDir, 'create-link/index.html');
 const vendorHref = `${relative(outputDir, templateVendorDir).split('\\').join('/')}/`;
 
 const title = `Lễ Thành Hôn ${info.chu_re} & ${info.co_dau}`;
@@ -607,14 +609,17 @@ if (dryRun) {
   console.log(`Sẽ xóa sạch rồi tạo lại thư mục: ${outputDir}`);
   console.log(`- ${outputHtmlPath}`);
   console.log(`- ${outputCalendarPath}`);
+  console.log(`- ${outputCreateLinkPath}`);
   console.log(`- Trỏ assets/vendor về ${templateVendorDir} (không sao chép)`);
   console.log(`- Sao chép ${managedImages.length} ảnh từ ${sourceImagesDir}`);
 } else {
   await rm(outputDir, { recursive: true, force: true });
   await mkdir(dirname(outputCalendarPath), { recursive: true });
+  await mkdir(dirname(outputCreateLinkPath), { recursive: true });
   await Promise.all([
     writeFile(outputHtmlPath, html),
     writeFile(outputCalendarPath, calendar),
+    writeFile(outputCreateLinkPath, createLinkPage(info)),
     copyPersonalImages(outputImagesDir),
   ]);
   console.log(`Đã tạo thiệp cho ${info.chu_re} & ${info.co_dau}.`);
