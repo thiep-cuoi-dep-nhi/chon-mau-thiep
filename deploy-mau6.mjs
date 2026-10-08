@@ -332,11 +332,11 @@ function buildRuntimeBlock(info) {
     function applyInvitationDetails() {
       const first = weddingInfo.date1;
       const second = weddingInfo.date2;
-      const couple = weddingInfo.chu_re + ' & ' + weddingInfo.co_dau;
+      const couple = weddingInfo.chu_re + ' - ' + weddingInfo.co_dau;
 
       document.title = 'Lễ Thành Hôn ' + couple;
       setMeta('meta[property="og:title"]', document.title);
-      setHtml('09n4st8z', escapeHtml(weddingInfo.chu_re) + ' &amp; ' + escapeHtml(weddingInfo.co_dau));
+      setHtml('09n4st8z', escapeHtml(weddingInfo.chu_re) + ' - ' + escapeHtml(weddingInfo.co_dau));
       setHtml('1d1q28ai', escapeHtml(weddingInfo.chu_re) + '<br>&amp;<br>' + escapeHtml(weddingInfo.co_dau) + '<br>');
       setHtml('00lwa1ur', '<span style="text-decoration-line: underline;">NHÀ TRAI<br></span>Ông: ' + escapeHtml(weddingInfo.bo_chu_re) + '<br>Bà: ' + escapeHtml(weddingInfo.me_chu_re) + '<br>');
       setHtml('3z6ulhfd', '<span style="text-decoration-line: underline;">NHÀ GÁI<br></span>Ông: ' + escapeHtml(weddingInfo.bo_co_dau) + '<br>Bà: ' + escapeHtml(weddingInfo.me_co_dau) + '<br>');
@@ -565,7 +565,7 @@ const outputCalendarPath = resolve(outputDir, 'assets/wedding-calendar.svg');
 const outputCreateLinkPath = resolve(outputDir, 'create-link/index.html');
 const vendorHref = `${relative(outputDir, templateVendorDir).split('\\').join('/')}/`;
 
-const title = `Lễ Thành Hôn ${info.chu_re} & ${info.co_dau}`;
+const title = `Lễ Thành Hôn ${info.chu_re} - ${info.co_dau}`;
 let html = await readFile(templateHtmlPath, 'utf8');
 html = replaceExactly(html, /<title>[\s\S]*?<\/title>/i, `<title>${escapeHtml(title)}</title>`, 'tiêu đề trang');
 html = replaceExactly(
@@ -574,7 +574,7 @@ html = replaceExactly(
   `<meta property="og:title" content="${escapeHtml(title)}">`,
   'tiêu đề chia sẻ',
 );
-html = replaceTextBlock(html, '09n4st8z', `${escapeHtml(info.chu_re)} &amp; ${escapeHtml(info.co_dau)}`);
+html = replaceTextBlock(html, '09n4st8z', `${escapeHtml(info.chu_re)} - ${escapeHtml(info.co_dau)}`);
 html = replaceTextBlock(html, 'gm23y5sz', `${escapeHtml(uppercase(info.day2))} | ${escapeHtml(uppercase(info.time2))}`);
 html = replaceTextBlock(html, 'm7ltj4vm', escapeHtml(dotDate(info.date2)));
 html = replaceTextBlock(html, '1d1q28ai', `${escapeHtml(info.chu_re)}<br>&amp;<br>${escapeHtml(info.co_dau)}<br>`);
