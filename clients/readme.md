@@ -1,1 +1,1 @@
-thư mục này cho cleint
+# thư mục này cho cleint

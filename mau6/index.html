@@ -1088,11 +1088,11 @@ document.addEventListener("keydown", function (event) {
     function applyInvitationDetails() {
       const first = weddingInfo.date1;
       const second = weddingInfo.date2;
-      const couple = weddingInfo.chu_re + ' & ' + weddingInfo.co_dau;
+      const couple = weddingInfo.chu_re + ' - ' + weddingInfo.co_dau;
 
       document.title = 'Lễ Thành Hôn ' + couple;
       setMeta('meta[property="og:title"]', document.title);
-      setHtml('09n4st8z', escapeHtml(weddingInfo.chu_re) + ' &amp; ' + escapeHtml(weddingInfo.co_dau));
+      setHtml('09n4st8z', escapeHtml(weddingInfo.chu_re) + ' - ' + escapeHtml(weddingInfo.co_dau));
       setHtml('1d1q28ai', escapeHtml(weddingInfo.chu_re) + '<br>&amp;<br>' + escapeHtml(weddingInfo.co_dau) + '<br>');
       setHtml('00lwa1ur', '<span style="text-decoration-line: underline;">NHÀ TRAI<br></span>Ông: ' + escapeHtml(weddingInfo.bo_chu_re) + '<br>Bà: ' + escapeHtml(weddingInfo.me_chu_re) + '<br>');
       setHtml('3z6ulhfd', '<span style="text-decoration-line: underline;">NHÀ GÁI<br></span>Ông: ' + escapeHtml(weddingInfo.bo_co_dau) + '<br>Bà: ' + escapeHtml(weddingInfo.me_co_dau) + '<br>');
@@ -1444,7 +1444,7 @@ document.addEventListener("keydown", function (event) {
   #w-09n4st8z .text-block-css {
     color: #b20f1a !important;
     font-family: "GreatVibes-Regular.ttf", "Ephesis-Regular.ttf", cursive !important;
-    font-size: 40px !important;
+    font-size: 30px !important;
     font-weight: 400 !important;
     letter-spacing: 0 !important;
     line-height: 1.2 !important;
